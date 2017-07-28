@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Nobody reads titles :(</title>
+<style>
+/*@font-face
+{
+	font-family: font;
+	src: url("unispace.ttf");
+}*/
+
+#moneyP
+{
+	font-size: 20px;
+}
+
+#chatDIV
+{
+	border-style: solid;
+	border-color: black;
+	border-width: 1px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	/*font-family: font;*/
+	font-size: 20px;
+	height: 400px;
+	overflow-y: scroll;
+}
+</style>
+</head>
+<body>
+<script src = "data.js"></script>
+<h1>Bank... thing</h1>
+<p id = "moneyP"></p>
+<p id = "chatDIV"></p>
+<button id = "continueButton">Continue</button>
+<button id = "loanButton" disabled>Loan</button>
+<button id = "denyLoanButton" disabled>Deny Loan</button>
+<script>
+function get(id)
+{
+	return document.getElementById(id);
+}
+
+var moneyP = get("moneyP");
+var chatDIV = get("chatDIV");
+var continueButton = get("continueButton");
+var loanButton = get("loanButton");
+var denyLoanButton = get("denyLoanButton");
+
+loanButton.addEventListener("click", function()
+{
+	onLoan(true);
+});
+
+
+denyLoanButton.addEventListener("click", function()
+{
+	onLoan(false);
+});
+
+
+var loanIndex = -1;
+
+function onContinue()
+{
+	if (money <= 0)
+	{
+		clear();
+
+		print("Oh, noes! You have no money. So now you cannot make more loans.");
+		print("And given your record so far, nobody is giving YOU a loan.");
+		print("So, well, you lose. A lot. As expected.");
+
+		disableButton(continueButton, true);
+		disableButton(loanButton, true);
+		disableButton(denyLoanButton, true);
+
+		return;
+	}
+
+	++loanIndex;
+
+	currentLoan = data.loans[loanIndex];
+
+	if (currentLoan == undefined)
+	{
+		gameOver();
+
+		return;
+	}
+
+	clear();
+
+	disableButton(continueButton, true);
+	disableButton(loanButton, false);
+	disableButton(denyLoanButton, false);
+
+	printLoan(currentLoan);
+}
+
+function gameOver()
+{
+	clear();
+
+	disableButton(continueButton, true);
+	disableButton(loanButton, true);
+	disableButton(denyLoanButton, true);
+
+	if (money >= data.moneyGoal)
+	{
+		print("You succeeded (who would have thunk it?) with $" + money + ", beating the goal by $" + (money - data.moneyGoal) + ".");
+	}
+	else
+		print("You failed. Just as I thought. You have $" + money + ", short of the goal by $" + (data.moneyGoal - money) + ".");
+}
+
+function onLoan(accept)
+{
+	disableButton(loanButton, true);
+	disableButton(denyLoanButton, true);
+	disableButton(continueButton, false);
+
+	clear();
+
+	if (accept)
+	{
+		if (currentLoan.amount > money)
+		{
+			print("You don't have enough money to make this loan.");
+			print("Who do you think you are, the federal government?");
+			printBlanks(1);
+		}
+		else if (currentLoan.chance < 0 || Math.random() > (1 - currentLoan.chance))
+		{
+			money -= currentLoan.amount;
+
+			print(currentLoan.name + " defaulted on the loan.");
+			print(currentLoan.failReason);
+			printBlanks(1);
+			print("You are out $" + currentLoan.amount + ".");
+		}
+		else
+		{
+			var gain = Math.ceil(currentLoan.amount*currentLoan.rate);
+
+			money += gain;
+
+			print(currentLoan.name + " paid back their loan.");
+			print(currentLoan.successReason);
+			printBlanks(1);
+			print("You gained $" + gain + ".");
+		}
+	}
+
+	money -= upkeep;
+
+	print("Paid $" + upkeep + " for daily operation costs.");
+	print("You now have $" + money + ".");
+	print("There are " + (data.loans.length - (loanIndex + 1)) + " days left.");
+
+	moneyP.innerHTML = "Money: $" + money + ".";
+}
+
+continueButton.addEventListener("click", onContinue);
+
+function disableButton(elem, status)
+{
+	elem.disabled = status ? status : undefined;
+}
+
+function print(text)
+{
+	var empty = chatDIV.innerHTML == "";
+
+	if (empty)
+		chatDIV.innerHTML = text;
+	else
+		chatDIV.innerHTML = chatDIV.innerHTML + "<br>" + text;
+
+	chatDIV.scrollTop = chatDIV.scrollHeight;
+}
+
+function printBlanks(count)
+{
+	for (var i = 0; i < count; ++i)
+		print("");
+}
+
+function clear()
+{
+	chatDIV.innerHTML = "";
+}
+
+function printLoan(loan)
+{
+	print(loan.name + " wants a loan for $" + loan.amount + ".");
+	print(loan.name + ": " + loan.reason);
+	print("Rate: " + (loan.rate*100) + "%.");
+}
+
+var money = data.startMoney;
+var upkeep = data.upkeep;
+var loanIndex = -1;
+var currentLoan = null;
+
+moneyP.innerHTML = "Money: $" + money + ".";
+
+print("Welcome to... the bank game.");
+print("So here is what you do. Make money. Not lose money. Because we are a bank, you know?");
+print("You are the loan manager. You give out loans, basically.");
+print("You start out with $" + data.startMoney + ". You must make $" + data.moneyGoal + " within " + data.loans.length + " days. Don't screw this up.");
+print("You control things with those buttons down there. I labeled them, so even you should be able to figure them out.");
+
+
+</script>
+</body>
+</html>
